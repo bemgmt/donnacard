@@ -1,0 +1,105 @@
+{
+  "objects": {
+    "47699d9e-18a5-4f88-a4f9-b8be92e8f74a": {
+      "components": {},
+      "geometry": null,
+      "id": "47699d9e-18a5-4f88-a4f9-b8be92e8f74a",
+      "light": {
+        "type": "ambient",
+        "intensity": 0.6,
+        "color": "#c8d8ff"
+      },
+      "material": null,
+      "name": "Ambient Light",
+      "position": [0, 5, 5],
+      "rotation": [0, 0, 0, 1],
+      "scale": [1, 1, 1],
+      "parentId": "88453035-dc0f-486d-868a-8ff7c2fda864",
+      "order": 0.4
+    },
+    "ac1989e3-3b71-49e2-a05f-e682aeb18c36": {
+      "components": {},
+      "geometry": null,
+      "id": "ac1989e3-3b71-49e2-a05f-e682aeb18c36",
+      "light": {
+        "intensity": 0.8,
+        "type": "directional",
+        "color": "#ffffff"
+      },
+      "material": null,
+      "name": "Directional Light",
+      "position": [5, 10, 5],
+      "rotation": [0, 0, 0, 1],
+      "scale": [1, 1, 1],
+      "parentId": "88453035-dc0f-486d-868a-8ff7c2fda864",
+      "order": 0.6
+    },
+    "a608ddd9-9379-464d-966f-5d8d8674c83c": {
+      "camera": {
+        "type": "perspective",
+        "xr": {
+          "phone": "AR",
+          "desktop": "3D",
+          "xrCameraType": "world",
+          "headset": "disabled",
+          "world": {
+            "scale": "absolute",
+            "disableWorldTracking": false
+          }
+        }
+      },
+      "components": {},
+      "geometry": null,
+      "id": "a608ddd9-9379-464d-966f-5d8d8674c83c",
+      "material": null,
+      "name": "AR Camera",
+      "position": [0, 5, 5],
+      "rotation": [0, 0, 0, 1],
+      "scale": [1, 1, 1],
+      "parentId": "88453035-dc0f-486d-868a-8ff7c2fda864",
+      "order": 1.0
+    },
+    "b3f1a2c4-d5e6-47f8-9a0b-1c2d3e4f5678": {
+      "components": {
+        "d1e2f3a4-b5c6-47d8-9e0f-1a2b3c4d5e6f": {
+          "id": "d1e2f3a4-b5c6-47d8-9e0f-1a2b3c4d5e6f",
+          "name": "donna-ar",
+          "parameters": {
+            "imageTargetName": "donna-card"
+          }
+        }
+      },
+      "geometry": null,
+      "id": "b3f1a2c4-d5e6-47f8-9a0b-1c2d3e4f5678",
+      "material": null,
+      "name": "DONNA Card Target",
+      "imageTarget": {
+        "name": "donna-card"
+      },
+      "position": [0, 0, 0],
+      "rotation": [0, 0, 0, 1],
+      "scale": [1, 1, 1],
+      "parentId": "88453035-dc0f-486d-868a-8ff7c2fda864",
+      "order": 2.0
+    }
+  },
+  "spaces": {
+    "88453035-dc0f-486d-868a-8ff7c2fda864": {
+      "id": "88453035-dc0f-486d-868a-8ff7c2fda864",
+      "name": "Default",
+      "activeCamera": "a608ddd9-9379-464d-966f-5d8d8674c83c",
+      "reflections": {
+        "type": "url",
+        "url": "https://cdn.8thwall.com/web/assets/envmap/basic_env_map-m9hqpneh.jpg"
+      }
+    }
+  },
+  "entrySpaceId": "88453035-dc0f-486d-868a-8ff7c2fda864",
+  "runtimeVersion": {
+    "type": "version",
+    "level": "major",
+    "major": 2,
+    "minor": 0,
+    "patch": 0
+  }
+}

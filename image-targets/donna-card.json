@@ -1,0 +1,24 @@
+{
+  "imagePath": "image-targets/donna-card_luminance.jpg",
+  "resources": {
+    "originalImage": "donna-card_original.jpg",
+    "croppedImage": "donna-card_cropped.jpg",
+    "thumbnailImage": "donna-card_thumbnail.jpg",
+    "luminanceImage": "donna-card_luminance.jpg"
+  },
+  "name": "donna-card",
+  "type": "PLANAR",
+  "properties": {
+    "top": 0,
+    "left": 293,
+    "width": 439,
+    "height": 585,
+    "isRotated": false,
+    "originalWidth": 1024,
+    "originalHeight": 585
+  },
+  "userMetadataIsJson": true,
+  "loadAutomatically": true,
+  "created": 1772592939407,
+  "updated": 1772592939407
+}
