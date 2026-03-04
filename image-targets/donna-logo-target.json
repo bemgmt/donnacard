@@ -1,0 +1,23 @@
+{
+  "imagePath": "image-targets/donna-logo-target_luminance.jpg",
+  "metadata": null,
+  "name": "donna-logo-target",
+  "type": "PLANAR",
+  "properties": {
+    "left": 128,
+    "top": 0,
+    "width": 768,
+    "height": 1024,
+    "isRotated": true,
+    "originalWidth": 1023,
+    "originalHeight": 1024
+  },
+  "resources": {
+    "originalImage": "donna-logo-target_original.jpg",
+    "croppedImage": "donna-logo-target_cropped.jpg",
+    "thumbnailImage": "donna-logo-target_thumbnail.jpg",
+    "luminanceImage": "donna-logo-target_luminance.jpg"
+  },
+  "created": 1772616809803,
+  "updated": 1772616809803
+}

@@ -1,13 +1,13 @@
 // ──────────────────────────────────────────────────────────
 // app.js — XR8 image target configuration
-// Loads the donna-card image target data into the engine.
+// Loads the donna-logo image target data into the engine.
 // Must run before the ECS scene initializes.
 // ──────────────────────────────────────────────────────────
 
 const onxrloaded = () => {
   XR8.XrController.configure({
     imageTargetData: [
-      require('../image-targets/donna-card.json'),
+      require('../image-targets/donna-logo-target.json'),
     ],
   })
 }

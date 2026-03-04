@@ -35,7 +35,7 @@ import {IconManager} from './iconManager'
 import {DonnaTransition} from './donnaTransition'
 import {AnimationController} from './animationController'
 
-const IMAGE_TARGET_NAME = 'donna-card'
+const IMAGE_TARGET_NAME = 'donna-logo-target'
 
 // ── Shared state (per-session, survives hot-reload) ──────
 
@@ -75,6 +75,7 @@ ecs.registerComponent({
     arGroup = new THREE.Group()
     arGroup.name = 'donna-ar-root'
     arGroup.visible = false
+    arGroup.scale.set(2, 2, 2)
     if (targetObject) {
       targetObject.add(arGroup)
     } else {
@@ -91,7 +92,7 @@ ecs.registerComponent({
     donna = new DonnaTransition()
     arGroup.add(donna.group)
 
-    controller = new AnimationController(grid, icons, donna)
+    controller = new AnimationController(grid, icons, donna, arGroup)
 
     controller.onEnterLayer = () => {
       console.log('[DONNA] enterDonnaLayer() → ready for next sequence')
@@ -168,9 +169,11 @@ ecs.registerComponent({
     if (grid) grid.update(dt)
     if (icons) icons.update(dt, camera)
     if (donna) donna.update(dt, camera)
+    if (controller) controller.update(dt)
   },
 
   remove: (world, {eid}) => {
+    if (controller) controller.dispose()
     if (grid) grid.dispose()
     if (icons) icons.dispose()
     if (donna) donna.dispose()

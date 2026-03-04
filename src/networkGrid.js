@@ -1,22 +1,15 @@
-// ──────────────────────────────────────────────────────────
-// networkGrid.js — Neural infrastructure grid
-// Creates a glowing, gently undulating grid plane with
-// instanced nodes and ambient floating particles.
-// The grid conveys digital infrastructure, not a floor.
-// ──────────────────────────────────────────────────────────
-
 import * as THREE from 'three'
+import gsap from 'gsap'
 
 const GRID_SIZE = 0.9
 const GRID_SEGMENTS = 48
 const NODE_COUNT = 80
 const PARTICLE_COUNT = 120
 
-// ── Shaders ──────────────────────────────────────────────
-
 const gridVertexShader = /* glsl */ `
   uniform float uTime;
   uniform float uPulse;
+  uniform float uScan;
   varying vec2 vUv;
   varying float vElevation;
   varying float vDistFromCenter;
@@ -28,17 +21,21 @@ const gridVertexShader = /* glsl */ `
     vec2 centered = uv - 0.5;
     vDistFromCenter = length(centered);
 
-    // Gentle neural-surface undulation
     float wave1 = sin(pos.x * 8.0 + uTime * 0.6) * 0.004;
     float wave2 = cos(pos.y * 6.0 + uTime * 0.4) * 0.003;
     float wave3 = sin((pos.x + pos.y) * 5.0 + uTime * 0.5) * 0.002;
     float elevation = wave1 + wave2 + wave3;
 
-    // Pulse wave that radiates outward from center
     if (uPulse >= 0.0) {
       float pulseDist = abs(vDistFromCenter - uPulse * 0.7);
       float pulseWave = smoothstep(0.08, 0.0, pulseDist) * 0.012;
       elevation += pulseWave;
+    }
+
+    if (uScan >= 0.0) {
+      float scanLine = abs(centered.y - (uScan - 0.5));
+      float scanWave = smoothstep(0.06, 0.0, scanLine) * 0.008;
+      elevation += scanWave;
     }
 
     pos.z += elevation;
@@ -51,6 +48,7 @@ const gridVertexShader = /* glsl */ `
 const gridFragmentShader = /* glsl */ `
   uniform float uTime;
   uniform float uPulse;
+  uniform float uScan;
   uniform vec3 uPrimaryColor;
   uniform vec3 uSecondaryColor;
   varying vec2 vUv;
@@ -58,41 +56,40 @@ const gridFragmentShader = /* glsl */ `
   varying float vDistFromCenter;
 
   void main() {
-    // Grid lines via UV fract (screen-space derivative for anti-aliasing)
     vec2 gridUv = vUv * 20.0;
     vec2 grid = abs(fract(gridUv - 0.5) - 0.5);
     vec2 lineWidth = fwidth(gridUv) * 1.2;
     vec2 lines = smoothstep(lineWidth, vec2(0.0), grid);
     float gridLine = max(lines.x, lines.y);
 
-    // Base dark background
     vec3 bgColor = vec3(0.043, 0.106, 0.169);
 
-    // Grid line color blending primary ↔ secondary
     float colorMix = sin(vUv.x * 6.28 + uTime * 0.3) * 0.5 + 0.5;
     vec3 lineColor = mix(uPrimaryColor, uSecondaryColor, colorMix) * 0.45;
 
-    // Elevation-based brightness boost
     float elevGlow = smoothstep(-0.005, 0.01, vElevation) * 0.3;
     lineColor += uPrimaryColor * elevGlow;
 
-    // Radial pulse glow
     if (uPulse >= 0.0) {
       float pulseDist = abs(vDistFromCenter - uPulse * 0.7);
       float pulseGlow = smoothstep(0.12, 0.0, pulseDist) * 0.6;
       lineColor += uPrimaryColor * pulseGlow;
     }
 
+    if (uScan >= 0.0) {
+      vec2 centered = vUv - 0.5;
+      float scanLine = abs(centered.y - (uScan - 0.5));
+      float scanGlow = smoothstep(0.08, 0.0, scanLine) * 0.8;
+      lineColor += uPrimaryColor * scanGlow;
+    }
+
     vec3 color = mix(bgColor, lineColor, gridLine);
 
-    // Circular falloff so grid fades at edges
     float edgeFade = smoothstep(0.52, 0.32, vDistFromCenter);
 
     gl_FragColor = vec4(color, edgeFade * 0.75);
   }
 `
-
-// ── NetworkGrid class ────────────────────────────────────
 
 export class NetworkGrid {
   constructor() {
@@ -100,12 +97,12 @@ export class NetworkGrid {
     this.group.name = 'network-grid'
     this.time = 0
     this.pulseProgress = -1
+    this.scanProgress = -1
 
     this._createGridPlane()
     this._createNodes()
     this._createParticles()
 
-    // Position the grid below the card (flat on XZ plane)
     this.group.rotation.x = -Math.PI / 2
     this.group.position.y = -0.005
   }
@@ -119,6 +116,7 @@ export class NetworkGrid {
       uniforms: {
         uTime: {value: 0},
         uPulse: {value: -1},
+        uScan: {value: -1},
         uPrimaryColor: {value: new THREE.Color(0x36D1FF)},
         uSecondaryColor: {value: new THREE.Color(0x8A6CFF)},
       },
@@ -163,7 +161,6 @@ export class NetworkGrid {
 
   _createParticles() {
     const positions = new Float32Array(PARTICLE_COUNT * 3)
-    const opacities = new Float32Array(PARTICLE_COUNT)
     this.particleData = []
 
     for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -176,7 +173,6 @@ export class NetworkGrid {
       positions[i * 3] = x
       positions[i * 3 + 1] = y
       positions[i * 3 + 2] = z
-      opacities[i] = Math.random()
 
       this.particleData.push({
         baseX: x, baseY: y, baseZ: z,
@@ -204,18 +200,34 @@ export class NetworkGrid {
     this.group.add(this.particles)
   }
 
-  // Trigger the outward pulse wave (called during DONNA entrance)
   pulse() {
     this.pulseProgress = 0
+  }
+
+  scanWake() {
+    this.scanProgress = 0
+  }
+
+  lift(duration = 0.6) {
+    gsap.to(this.group.position, {
+      y: 0.02,
+      duration,
+      ease: 'power2.out',
+    })
+    gsap.to(this.group.scale, {
+      x: 1.05,
+      y: 1.05,
+      z: 1.05,
+      duration,
+      ease: 'power2.out',
+    })
   }
 
   update(dt) {
     this.time += dt
 
-    // Shader time
     this.gridMaterial.uniforms.uTime.value = this.time
 
-    // Pulse animation
     if (this.pulseProgress >= 0) {
       this.pulseProgress += dt * 0.6
       this.gridMaterial.uniforms.uPulse.value = this.pulseProgress
@@ -225,7 +237,15 @@ export class NetworkGrid {
       }
     }
 
-    // Animate node brightness via slight z-oscillation
+    if (this.scanProgress >= 0) {
+      this.scanProgress += dt * 1.2
+      this.gridMaterial.uniforms.uScan.value = this.scanProgress
+      if (this.scanProgress > 1.0) {
+        this.scanProgress = -1
+        this.gridMaterial.uniforms.uScan.value = -1
+      }
+    }
+
     const dummy = new THREE.Object3D()
     for (let i = 0; i < NODE_COUNT; i++) {
       const nd = this.nodeBasePositions[i]
@@ -238,7 +258,6 @@ export class NetworkGrid {
     }
     this.nodesMesh.instanceMatrix.needsUpdate = true
 
-    // Animate particles — slow ambient drift
     const posAttr = this.particles.geometry.getAttribute('position')
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       const pd = this.particleData[i]

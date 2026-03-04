@@ -1,22 +1,11 @@
-// ──────────────────────────────────────────────────────────
-// donnaTransition.js — DONNA logo entrance and glow
-// Manages the DONNA logo appearance, breathing glow,
-// and the visual transition from fragmented to organized.
-// Also handles the "Entering Operational Intelligence
-// Layer" tap interaction.
-// ──────────────────────────────────────────────────────────
-
 import * as THREE from 'three'
 import gsap from 'gsap'
 
-// Asset path — webpack copies to dist/assets, loader returns path
 import donnaLogoPath from './assets/donna-logo.png'
 
 const DONNA_SIZE = 0.08
 const DONNA_GLOW_SIZE = 0.14
 const DONNA_HEIGHT = 0.18
-
-// ── Helper: create DONNA logo canvas texture (fallback) ───
 
 function createDonnaTextureFallback() {
   const size = 512
@@ -27,7 +16,6 @@ function createDonnaTextureFallback() {
 
   ctx.clearRect(0, 0, size, size)
 
-  // Outer glow ring
   const gradient = ctx.createRadialGradient(size / 2, size / 2, size * 0.15, size / 2, size / 2, size * 0.42)
   gradient.addColorStop(0, 'rgba(54, 209, 255, 0.0)')
   gradient.addColorStop(0.5, 'rgba(54, 209, 255, 0.08)')
@@ -36,7 +24,6 @@ function createDonnaTextureFallback() {
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, size, size)
 
-  // Hexagonal frame
   const cx = size / 2
   const cy = size / 2
   const r = size * 0.3
@@ -58,14 +45,12 @@ function createDonnaTextureFallback() {
   ctx.stroke()
   ctx.shadowBlur = 0
 
-  // Inner ring
   ctx.beginPath()
   ctx.arc(cx, cy, r * 0.55, 0, Math.PI * 2)
   ctx.strokeStyle = 'rgba(138, 108, 255, 0.5)'
   ctx.lineWidth = 2
   ctx.stroke()
 
-  // DONNA text
   ctx.fillStyle = '#36D1FF'
   ctx.font = 'bold 52px "Helvetica Neue", Arial, sans-serif'
   ctx.textAlign = 'center'
@@ -75,18 +60,14 @@ function createDonnaTextureFallback() {
   ctx.fillText('DONNA', cx, cy - 8)
   ctx.shadowBlur = 0
 
-  // Subtitle
   ctx.fillStyle = 'rgba(138, 108, 255, 0.7)'
   ctx.font = '18px "Helvetica Neue", Arial, sans-serif'
-  ctx.letterSpacing = '3px'
   ctx.fillText('O P E R A T I O N A L', cx, cy + 30)
 
   const texture = new THREE.CanvasTexture(canvas)
   texture.needsUpdate = true
   return texture
 }
-
-// ── Glow sprite texture ──────────────────────────────────
 
 function createGlowTexture() {
   const size = 256
@@ -109,8 +90,6 @@ function createGlowTexture() {
   return texture
 }
 
-// ── DonnaTransition class ────────────────────────────────
-
 export class DonnaTransition {
   constructor() {
     this.group = new THREE.Group()
@@ -119,9 +98,11 @@ export class DonnaTransition {
     this.visible = false
     this.interactive = false
 
+    this._createWireframe()
     this._createLogo()
     this._createGlow()
     this._createPulseLines()
+    this._createSignalRings()
 
     this.group.position.y = DONNA_HEIGHT
     this.group.visible = false
@@ -131,8 +112,47 @@ export class DonnaTransition {
     return new THREE.Vector3(0, DONNA_HEIGHT, 0)
   }
 
+  _createWireframe() {
+    const hexPoints = []
+    for (let i = 0; i <= 6; i++) {
+      const angle = (Math.PI / 3) * i - Math.PI / 6
+      hexPoints.push(new THREE.Vector3(
+        Math.cos(angle) * DONNA_SIZE * 0.5,
+        Math.sin(angle) * DONNA_SIZE * 0.5,
+        0.001
+      ))
+    }
+
+    const hexGeo = new THREE.BufferGeometry().setFromPoints(hexPoints)
+    this.wireframeMaterial = new THREE.LineBasicMaterial({
+      color: 0x36D1FF,
+      transparent: true,
+      opacity: 0,
+    })
+    this.wireframeMesh = new THREE.Line(hexGeo, this.wireframeMaterial)
+    this.group.add(this.wireframeMesh)
+
+    const innerPoints = []
+    const innerR = DONNA_SIZE * 0.3
+    for (let i = 0; i <= 32; i++) {
+      const angle = (i / 32) * Math.PI * 2
+      innerPoints.push(new THREE.Vector3(
+        Math.cos(angle) * innerR,
+        Math.sin(angle) * innerR,
+        0.001
+      ))
+    }
+    const innerGeo = new THREE.BufferGeometry().setFromPoints(innerPoints)
+    this.innerRingMaterial = new THREE.LineBasicMaterial({
+      color: 0x8A6CFF,
+      transparent: true,
+      opacity: 0,
+    })
+    this.innerRingMesh = new THREE.Line(innerGeo, this.innerRingMaterial)
+    this.group.add(this.innerRingMesh)
+  }
+
   _createLogo() {
-    // Use fallback texture immediately; replace with real logo when loaded
     const texture = createDonnaTextureFallback()
     const geometry = new THREE.PlaneGeometry(DONNA_SIZE, DONNA_SIZE)
     this.logoMaterial = new THREE.MeshBasicMaterial({
@@ -141,12 +161,11 @@ export class DonnaTransition {
       opacity: 0,
       side: THREE.DoubleSide,
       depthWrite: false,
-      alphaTest: 0.1, // Helps with dark-background logos
+      alphaTest: 0.1,
     })
     this.logoMesh = new THREE.Mesh(geometry, this.logoMaterial)
     this.group.add(this.logoMesh)
 
-    // Load actual DONNA logo asset
     const loader = new THREE.TextureLoader()
     const url = donnaLogoPath.startsWith('/') ? donnaLogoPath : '/' + donnaLogoPath
     loader.load(
@@ -155,13 +174,10 @@ export class DonnaTransition {
         loadedTexture.colorSpace = THREE.SRGBColorSpace
         this.logoMaterial.map = loadedTexture
         this.logoMaterial.map.needsUpdate = true
-        // Dispose fallback
         texture.dispose()
       },
       undefined,
-      () => {
-        // On error, keep canvas fallback
-      }
+      () => {}
     )
   }
 
@@ -179,7 +195,6 @@ export class DonnaTransition {
     this.group.add(this.glowSprite)
   }
 
-  // Radial pulse lines emanating from center
   _createPulseLines() {
     this.pulseLines = []
     const lineCount = 8
@@ -203,85 +218,122 @@ export class DonnaTransition {
     }
   }
 
-  // Fade in DONNA logo with glow (called ~3s after sequence 1)
-  fadeIn() {
+  _createSignalRings() {
+    this.signalRings = []
+    const ringCount = 2
+
+    for (let i = 0; i < ringCount; i++) {
+      const ringPoints = []
+      const r = DONNA_SIZE * (0.6 + i * 0.25)
+      for (let j = 0; j <= 64; j++) {
+        const angle = (j / 64) * Math.PI * 2
+        ringPoints.push(new THREE.Vector3(
+          Math.cos(angle) * r,
+          Math.sin(angle) * r,
+          0.002
+        ))
+      }
+
+      const geo = new THREE.BufferGeometry().setFromPoints(ringPoints)
+      const mat = new THREE.LineBasicMaterial({
+        color: i === 0 ? 0x36D1FF : 0x8A6CFF,
+        transparent: true,
+        opacity: 0,
+      })
+      const ring = new THREE.Line(geo, mat)
+      this.signalRings.push({mesh: ring, material: mat, speed: 0.1 + i * 0.08})
+      this.group.add(ring)
+    }
+  }
+
+  showWireframe() {
+    gsap.to(this.wireframeMaterial, {
+      opacity: 0.8,
+      duration: 0.4,
+      ease: 'power2.in',
+    })
+    gsap.to(this.innerRingMaterial, {
+      opacity: 0.5,
+      duration: 0.5,
+      delay: 0.1,
+      ease: 'power2.in',
+    })
+  }
+
+  materialize() {
     this.group.visible = true
     this.visible = true
 
-    // Logo fade in
+    gsap.to(this.wireframeMaterial, {
+      opacity: 0.3,
+      duration: 0.5,
+      delay: 0.3,
+    })
+
     gsap.to(this.logoMaterial, {
       opacity: 1.0,
-      duration: 1.5,
+      duration: 1.0,
+      delay: 0.2,
       ease: 'power2.inOut',
     })
 
-    // Glow fade in
     gsap.to(this.glowMaterial, {
       opacity: 0.6,
-      duration: 2.0,
+      duration: 1.5,
+      delay: 0.3,
       ease: 'power2.inOut',
     })
 
-    // Slight elevation rise
     gsap.from(this.group.position, {
       y: DONNA_HEIGHT - 0.03,
-      duration: 1.5,
+      duration: 1.0,
       ease: 'power2.out',
     })
 
-    // Scale pop
     gsap.from(this.group.scale, {
-      x: 0.5, y: 0.5, z: 0.5,
-      duration: 1.2,
+      x: 0.3, y: 0.3, z: 0.3,
+      duration: 0.8,
       ease: 'back.out(1.7)',
     })
 
-    // Pulse lines flash
     this.pulseLines.forEach((pl, i) => {
       gsap.to(pl.material, {
         opacity: 0.5,
         duration: 0.4,
-        delay: 0.8 + i * 0.06,
+        delay: 0.5 + i * 0.06,
         ease: 'power2.out',
         onComplete: () => {
-          gsap.to(pl.material, {
-            opacity: 0,
-            duration: 0.6,
-          })
+          gsap.to(pl.material, {opacity: 0, duration: 0.6})
         },
+      })
+    })
+
+    this.signalRings.forEach((ring, i) => {
+      gsap.to(ring.material, {
+        opacity: 0.3,
+        duration: 0.8,
+        delay: 0.8 + i * 0.2,
+        ease: 'power2.out',
       })
     })
   }
 
-  // Enable tap interaction after network stabilizes
   enableInteraction() {
     this.interactive = true
   }
 
-  // Check if a world-space point is near the logo (for tap detection)
-  hitTest(point) {
-    if (!this.interactive) return false
-    const logoWorldPos = new THREE.Vector3()
-    this.logoMesh.getWorldPosition(logoWorldPos)
-    return logoWorldPos.distanceTo(point) < DONNA_SIZE * 1.2
-  }
-
-  // The mesh to raycast against for tap detection
   getInteractiveMesh() {
     return this.logoMesh
   }
 
-  // Per-frame update: breathing glow animation
   update(dt, camera) {
     if (!this.visible) return
     this.time += dt
 
-    // Billboard: face camera
     if (camera) {
       this.logoMesh.lookAt(camera.position)
     }
 
-    // Breathing glow scale
     const breathe = 1.0 + Math.sin(this.time * 1.2) * 0.06
     this.glowSprite.scale.set(
       DONNA_GLOW_SIZE * breathe,
@@ -289,10 +341,15 @@ export class DonnaTransition {
       1
     )
 
-    // Subtle glow opacity pulse
     if (this.glowMaterial.opacity > 0) {
       this.glowMaterial.opacity = 0.45 + Math.sin(this.time * 1.5) * 0.15
     }
+
+    this.signalRings.forEach((ring) => {
+      if (ring.material.opacity > 0) {
+        ring.mesh.rotation.z += ring.speed * dt
+      }
+    })
   }
 
   dispose() {
@@ -301,9 +358,17 @@ export class DonnaTransition {
     this.logoMaterial.dispose()
     this.glowMaterial.map?.dispose()
     this.glowMaterial.dispose()
+    this.wireframeMesh.geometry.dispose()
+    this.wireframeMaterial.dispose()
+    this.innerRingMesh.geometry.dispose()
+    this.innerRingMaterial.dispose()
     this.pulseLines.forEach((pl) => {
       pl.line.geometry.dispose()
       pl.material.dispose()
+    })
+    this.signalRings.forEach((ring) => {
+      ring.mesh.geometry.dispose()
+      ring.material.dispose()
     })
   }
 }

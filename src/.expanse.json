@@ -65,16 +65,16 @@
           "id": "d1e2f3a4-b5c6-47d8-9e0f-1a2b3c4d5e6f",
           "name": "donna-ar",
           "parameters": {
-            "imageTargetName": "donna-card"
+            "imageTargetName": "donna-logo-target"
           }
         }
       },
       "geometry": null,
       "id": "b3f1a2c4-d5e6-47f8-9a0b-1c2d3e4f5678",
       "material": null,
-      "name": "DONNA Card Target",
+      "name": "DONNA Logo Target",
       "imageTarget": {
-        "name": "donna-card"
+        "name": "donna-logo-target"
       },
       "position": [0, 0, 0],
       "rotation": [0, 0, 0, 1],
