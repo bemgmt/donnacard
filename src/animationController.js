@@ -27,6 +27,7 @@ export class AnimationController {
     this.phase = Phase.IDLE
     this.timeline = null
     this.onEnterLayer = null
+    this.profileOverlay = null
 
     this.lightColumn = new LightColumn()
     parentGroup.add(this.lightColumn.group)
@@ -37,6 +38,10 @@ export class AnimationController {
     this.pulses = new PulseAnimation(parentGroup)
 
     this.networkCompleteChecked = false
+  }
+
+  setProfileOverlay(overlay) {
+    this.profileOverlay = overlay
   }
 
   startSequence() {
@@ -149,6 +154,26 @@ export class AnimationController {
 
   enterDonnaLayer() {
     console.log('[DONNA] Entering Operational Intelligence Layer')
+
+    const whiteFade = document.getElementById('white-fade')
+    if (whiteFade) {
+      gsap.to(whiteFade, {
+        opacity: 0,
+        duration: 0.8,
+        delay: 0.3,
+        onComplete: () => {
+          whiteFade.classList.remove('active')
+          whiteFade.style.opacity = '0'
+        },
+      })
+    }
+
+    if (this.profileOverlay) {
+      gsap.delayedCall(0.5, () => {
+        this.profileOverlay.show()
+      })
+    }
+
     if (this.onEnterLayer) {
       this.onEnterLayer()
     }

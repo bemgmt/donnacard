@@ -1,0 +1,20 @@
+{
+  "fullName": "DONNA",
+  "headline": "Operational Intelligence",
+  "photo": "/assets/donna-logo.png",
+  "vcardPath": "/assets/contact.vcf",
+  "links": {
+    "website": "https://medium.com/@derek_20732",
+    "linkedin": "https://www.linkedin.com/company/aidonna/",
+    "twitter": "https://x.com/donnaai_",
+    "instagram": "https://www.instagram.com/donnaai__?igsh=MzRlODBiNWFlZA==",
+    "tiktok": "https://www.tiktok.com/@donnaai_?_r=1&_t=ZP-93lxKUYAA5n",
+    "facebook": "https://www.facebook.com/profile.php?id=61586503540067",
+    "youtube": "https://www.youtube.com/@bemdonna",
+    "medium": "https://medium.com/@derek_20732"
+  },
+  "video": {
+    "src": "/assets/media/DONNApromo1.mp4",
+    "poster": "/assets/media/donna-poster.webp"
+  }
+}

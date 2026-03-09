@@ -34,6 +34,7 @@ import {NetworkGrid} from './networkGrid'
 import {IconManager} from './iconManager'
 import {DonnaTransition} from './donnaTransition'
 import {AnimationController} from './animationController'
+import {ProfileOverlay} from './ui/profileOverlay'
 
 const IMAGE_TARGET_NAME = 'donna-logo-target'
 
@@ -45,6 +46,10 @@ let icons = null
 let donna = null
 let controller = null
 let arGroup = null
+let profileOverlay = null
+let guidanceEl = null
+let fallbackPageEl = null
+let trackingActive = false
 
 // ── Component registration ───────────────────────────────
 
@@ -94,9 +99,23 @@ ecs.registerComponent({
 
     controller = new AnimationController(grid, icons, donna, arGroup)
 
+    // ── Profile overlay (contact layer) ─────────────
+    profileOverlay = new ProfileOverlay()
+    profileOverlay.init({
+      onAction: (evt) => console.log('[DONNA] action:', evt.actionId),
+    }).catch((err) => console.warn('[DONNA] ProfileOverlay init error:', err))
+
+    controller.setProfileOverlay(profileOverlay)
+
     controller.onEnterLayer = () => {
-      console.log('[DONNA] enterDonnaLayer() → ready for next sequence')
+      console.log('[DONNA] enterDonnaLayer() → contact layer active')
+      hideGuidance()
     }
+
+    // ── Guidance + fallback DOM refs ─────────────────
+    guidanceEl = document.getElementById('ar-guidance')
+    fallbackPageEl = document.getElementById('fallback-page')
+    showGuidance()
 
     // ── Image target events (new 8th Wall pattern) ───
     // Listen on globalId for reality.imagefound/lost,
@@ -109,9 +128,10 @@ ecs.registerComponent({
       const data = event.data
       if (data.name !== targetName) return
 
+      trackingActive = true
       arGroup.visible = true
+      hideGuidance()
 
-      // Apply tracked position/rotation/scale from the engine
       if (targetObject) {
         if (data.position) {
           targetObject.position.set(data.position.x, data.position.y, data.position.z)
@@ -123,6 +143,10 @@ ecs.registerComponent({
           const s = typeof data.scale === 'number' ? data.scale : 1
           targetObject.scale.setScalar(s)
         }
+      }
+
+      if (profileOverlay && profileOverlay.visible) {
+        profileOverlay.show()
       }
 
       controller.startSequence()
@@ -150,7 +174,14 @@ ecs.registerComponent({
     world.events.addListener(world.events.globalId, 'reality.imagelost', (event) => {
       const data = event.data
       if (data.name !== targetName) return
-      // Keep visible briefly — the tracking system holds the last position
+
+      trackingActive = false
+
+      if (profileOverlay && profileOverlay.visible) {
+        profileOverlay.hide()
+      }
+
+      showGuidance()
     })
 
     // ── Tap interaction via screen touch ─────────────
@@ -177,6 +208,7 @@ ecs.registerComponent({
     if (grid) grid.dispose()
     if (icons) icons.dispose()
     if (donna) donna.dispose()
+    if (profileOverlay) profileOverlay.dispose()
     initialized = false
   },
 })
@@ -204,11 +236,27 @@ function setupTapHandler(world) {
     }
   }
 
-  // Listen on the renderer canvas for tap events
   const canvas = world.three.renderer.domElement
   if (canvas) {
     canvas.addEventListener('pointerup', (e) => {
       handleTap(e.clientX, e.clientY)
     }, {passive: true})
+  }
+}
+
+// ── Guidance helpers ──────────────────────────────────────
+
+function showGuidance() {
+  if (guidanceEl) guidanceEl.classList.add('visible')
+}
+
+function hideGuidance() {
+  if (guidanceEl) guidanceEl.classList.remove('visible')
+}
+
+function showFallbackPage() {
+  if (fallbackPageEl) fallbackPageEl.classList.add('visible')
+  if (profileOverlay) {
+    profileOverlay.showFallback()
   }
 }

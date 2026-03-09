@@ -17,6 +17,18 @@
       ]
     },
     {
+      "source": "/assets/media/(.*)\\.mp4",
+      "headers": [
+        { "key": "Content-Type", "value": "video/mp4" }
+      ]
+    },
+    {
+      "source": "/assets/(.*)\\.vcf",
+      "headers": [
+        { "key": "Content-Type", "value": "text/vcard" }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
